@@ -4,6 +4,7 @@ class Buildkite < Formula
   url "https://github.com/buildkite/cli/archive/refs/tags/v3.65.0.tar.gz"
   sha256 "df4b7cf62080f240834d4243cfc09c8f638c00da658527f7053c61bb487491b2"
   license "MIT"
+  revision 1
   head "https://github.com/buildkite/cli.git", branch: "main"
 
   bottle do
@@ -25,10 +26,21 @@ class Buildkite < Formula
   def install
     ldflags = "-s -w -X github.com/buildkite/cli/v3/cmd/version.Version=#{version}"
     system "go", "build", *std_go_args(ldflags:), "."
+    bin.install_symlink "buildkite" => "bk"
+  end
+
+  def caveats
+    <<~EOS
+      If you previously installed buildkite/buildkite/bk@3, switch the bk
+      command to this formula with:
+        brew unlink buildkite/buildkite/bk@3
+        brew link buildkite
+    EOS
   end
 
   test do
     assert_match version.to_s, shell_output("#{bin}/buildkite --version")
+    assert_match version.to_s, shell_output("#{bin}/bk --version")
 
     system bin/"buildkite", "config", "set", "output_format", "yaml", "--local"
     assert_equal "yaml", shell_output("#{bin}/buildkite config get output_format").strip
